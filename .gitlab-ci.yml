@@ -1,0 +1,34 @@
+image: 172.16.1.99/transwarp/shiva/build/centos/builder:7.2.1511-566efc6062
+
+precommit:
+        stage: build
+        script:
+                - rm -rf build
+                - mkdir build
+                - pushd build
+                - cmake ..
+                - make
+                - ./test_print
+                - popd
+        artifacts:
+                paths:
+                        - **/*.gcno
+                        - **/*.gcda
+
+coverage: 
+        stage: test
+        script:
+                - git clone https://github.com/Bachmann1234/diff-cover.git
+                - pushd diff-cover
+                - python setup.py install
+                - popd
+                - rm -rf coverage
+                - mkdir coverage
+                - mkdir coverage/global
+                - mkdir coverage/diff
+                - gcovr -r . --object-directory=build --html --html-details -o coverage/global/global.html
+                - gcovr -r . --object-directory=build --xml -o diff.xml
+                - diff-cover --html-report coverage/diff/diff.html --compare-branch master diff.xml
+        artifacts:
+                paths:
+                        - coverage/   
